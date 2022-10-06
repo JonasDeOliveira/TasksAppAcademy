@@ -1,11 +1,12 @@
 import React from 'react'
 import { Text } from 'react-native'
+import Auth from './screens/Auth'
 
 const App = props => {
 
     return (
         <>
-        <Text>Inicio da Aplicação</Text>
+        <Auth/>
         </>
     );
 };
