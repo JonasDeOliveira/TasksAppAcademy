@@ -5,4 +5,5 @@ export default interface Props {
     placeholder: string;
     onChangeText: (text:string) => void;
     secureTextEntry?: boolean;
+    size?: number;
 }

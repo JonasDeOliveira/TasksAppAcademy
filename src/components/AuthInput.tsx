@@ -3,10 +3,10 @@ import { View, TextInput, StyleSheet } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import Props from '../interfaces/props/AuthInput'
 
-const AuthInput: React.FC<Props> = (props: Props) => {
+const AuthInput: React.FC<Props> = ({size = 20, ...props}: Props) => {
     return (
         <View style={[styles.container, props.style]}>
-            <Icon name={props.icon} size={20} style={styles.icon}/>
+            <Icon name={props.icon} size={size} style={styles.icon}/>
             <TextInput {...props} style={styles.input}/>
         </View>
         
@@ -15,9 +15,9 @@ const AuthInput: React.FC<Props> = (props: Props) => {
 
 const styles = StyleSheet.create({
     container: {
-        height: 40,
+        height: 50,
         backgroundColor: '#eee',
-        borderRadius:20,
+        borderRadius:10,
         width: '100%',
         flexDirection: 'row',
         alignItems: 'center'
