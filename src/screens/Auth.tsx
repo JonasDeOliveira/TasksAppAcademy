@@ -5,21 +5,24 @@ import {
     Alert
  } from 'react-native'
  import axios from 'axios'
+ import AsyncStorage from '@react-native-community/async-storage'
  import backgroundImage from '../../assets/imgs/login.jpg'
  import commonStyles from '../commonStyles'
  import AuthInput from '../components/AuthInput'
  import State from '../interfaces/states/Auth'
+ import Props from '../interfaces/props/Auth'
  import If from '../components/If'
+ import { server, showError, showSuccess } from '../common'
  
 const initialState = {
     name: '',
-    email: '',
-    password: '',
+    email: 'jonas@.com',
+    password: '123456',
     confirmPassword: '',
     stageNew: false
 }
  
-class Auth extends Component<State> {
+class Auth extends Component<Props, State> {
 
 
     state: State = {
@@ -34,27 +37,48 @@ class Auth extends Component<State> {
         }
     }
 
-    signin = () => {
-        console.warn('login')
+    signin = async () => {
+        // console.warn('aqui')
+        try {
+            const response = await axios.post(`${server}/signin`, {
+                email: this.state.email,
+                password: this.state.password
+            })
+            AsyncStorage.setItem('userData', JSON.stringify(response.data))
+            axios.defaults.headers.common['Authorization'] = `bearer ${response.data.token}`
+            this.props.navigation.navigate('Home')
+        } catch (e) {
+            showError(e)
+        }
     }
 
     signup = async () => {
         console.warn(this.state)
         try {
-            await axios.post('http://10.0.2.2:3000/signup', {
+            await axios.post(`${server}/signup`, {
                 name: this.state.name,
                 email: this.state.email,
                 password: this.state.password,
                 confirmPassword: this.state.confirmPassword
             })
 
-            Alert.alert('Cadastrado com sucesso')
-        } catch (e) {
-            Alert.alert('erro')
+            showSuccess('Usuário cadastrado')
+        } catch(e) {
+            showError(e)
         }
     }
 
     render(): React.ReactElement {
+        let validations: Array<any> = []
+        validations.push(this.state.email && this.state.email.includes('@'))
+        validations.push(this.state.password && this.state.password.length >= 6)
+        
+        if (this.state.stageNew) {
+            validations.push(this.state.name && this.state.name.trim().length >= 3)
+            validations.push(this.state.password == this.state.confirmPassword)
+        }
+        
+        const validForm = validations.reduce((a, b) => a && b)
 
         return (
             <>
@@ -75,14 +99,17 @@ class Auth extends Component<State> {
                         onChangeText={email => this.setState({ email })}/>
                     <AuthInput icon="lock" placeholder="Senha" style={styles.input} 
                         value={this.state.password} size={25}
-                        onChangeText={password => this.setState({ password })}/>
+                        onChangeText={password => this.setState({ password })}
+                        secureTextEntry={true}/>
                     <If test={this.state.stageNew}>
                         <AuthInput icon="asterisk" placeholder="Confirmação de Senha" style={styles.input} 
                             value={this.state.confirmPassword} 
-                            onChangeText={confirmPassword => this.setState({ confirmPassword })}/>
+                            onChangeText={confirmPassword => this.setState({ confirmPassword })}
+                            secureTextEntry={true}/>
                     </If>
-                    <TouchableOpacity onPress={this.signinOrSignup}>
-                        <View style={styles.button}>
+                    <TouchableOpacity onPress={this.signinOrSignup}
+                        disabled={!validForm}>
+                        <View style={[styles.button, validForm ? {} : { backgroundColor: '#AAA' }]}>
                             <Text style={styles.buttonText}>
                                 {this.state.stageNew ? 'Registrar' : 'Entrar'}
                             </Text>

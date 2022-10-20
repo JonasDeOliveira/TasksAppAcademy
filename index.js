@@ -3,10 +3,10 @@
  */
  import 'react-native-gesture-handler';
  import { AppRegistry } from 'react-native'
- import App from './src/App'
+ import Navigator from './src/Navigator'
  import { name as appName } from './app.json'
  import {LogBox } from 'react-native';
  LogBox.ignoreLogs(['Reanimated 2']);
  
- AppRegistry.registerComponent(appName, () => App)
+ AppRegistry.registerComponent(appName, () => Navigator)
  
