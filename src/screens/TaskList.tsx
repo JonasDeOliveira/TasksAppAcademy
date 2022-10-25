@@ -8,6 +8,9 @@ import AddTask from './AddTask'
 import State from '../interfaces/states/TaskList'
 import Props from '../interfaces/props/TaskList'
 import Task from '../components/Task'
+import { TaskRequest } from '../interfaces/response/Task'
+import axios from 'axios'
+import { server, showError } from '../common'
 
 const initialState = {
     showAddTask: false
@@ -19,13 +22,27 @@ class TaskList extends Component<Props, State> {
         ...initialState
     }
 
+    addTask = async (newTask: TaskRequest): Promise<void> => {
+        try {
+            await axios.post(`${server}/tasks`, {
+                desc: newTask.desc,
+                estimateAt: newTask.estimateAt
+            })
+
+            this.setState({showAddTask: false})
+        } catch(e) {
+            console.warn(e)
+        }
+    }
+
     render(): React.ReactElement {
 
         return (
             <>
                 <View style={styles.constainer}>
                     <AddTask isVisible={this.state.showAddTask}
-                        closeModal={() => this.setState({showAddTask: false})}/>
+                        closeModal={() => this.setState({showAddTask: false})}
+                        onSave={this.addTask}/>
                     <ImageBackground source={todayImage}
                         style={styles.background}>
                         <View style={styles.iconBar}>

@@ -7,15 +7,48 @@ import If from '../components/If'
 import Props from '../interfaces/props/AddTask'
 import State from '../interfaces/states/AddTask'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import moment from 'moment'
 
 const initialState = {
-    showDataPicker: false
+    desc: '', showDataPicker: false, date: new Date()
 }
 
 class AddTask extends Component<Props, State> {
 
     state: State = {
         ...initialState
+    }
+
+    save = (): void => {
+        const newTask = {
+            desc: this.state.desc,
+            estimateAt: moment(this.state.date).format('YYYY-MM-DD h:mm:ss')
+        }
+
+        this.props.onSave(newTask)
+        
+    }
+
+    getDatePicker = () => {
+
+        const dateString = moment(this.state.date).format('ddd, D [de] MMMM [de] YYYY')
+
+        return (
+            <View>
+                <TouchableOpacity onPress={() => this.setState({ showDataPicker: true })}>
+                    <Text style={styles.date}>
+                        {dateString}
+                    </Text>
+                </TouchableOpacity>
+                <If test={this.state.showDataPicker}>
+                    <DateTimePicker mode='date' value={new Date()} 
+                        onChange={(e, date) => {
+                            let newDate = date ? date : new Date()
+                            this.setState({date: newDate, showDataPicker: false})
+                        }}/>
+                </If>
+            </View>
+        )
     }
 
     render(): React.ReactElement {
@@ -27,22 +60,14 @@ class AddTask extends Component<Props, State> {
                 <View style={styles.container}>
                     <Text style={styles.header}>Nova Tarefa</Text>
                     <TextInput style={styles.input}
-                        placeholder="Informe a descrição"/>
-                    <View>
-                        <TouchableOpacity onPress={() => this.setState({showDataPicker: true})}>
-                            <Text style={styles.date}>
-                                ter, 18 de outubro de 2022
-                            </Text>
-                        </TouchableOpacity>
-                        <If test={this.state.showDataPicker}>
-                            <DateTimePicker mode='date' value={new Date()} />
-                        </If>
-                    </View>
+                        placeholder="Informe a descrição"
+                        onChangeText={value => this.setState({ desc: value })} />
+                    {this.getDatePicker()}
                     <View style={styles.buttons}>
                         <TouchableOpacity>
                             <Text style={styles.button} onPress={this.props.closeModal}>Cancelar</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={this.save}>
                             <Text style={styles.button}>Salvar</Text>
                         </TouchableOpacity>
                     </View>
@@ -78,7 +103,7 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         height: 40,
         paddingLeft: 15
-    }, 
+    },
     date: {
         marginLeft: 15,
         fontSize: 20
