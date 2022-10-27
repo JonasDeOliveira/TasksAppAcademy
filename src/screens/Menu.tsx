@@ -5,8 +5,25 @@ import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawe
 import { CommonActions } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome'
 import Props from '../interfaces/props/Menu'
+import axios from 'axios'
+import AsyncStorage from '@react-native-community/async-storage'
 
 const Menu: React.FC<Props> = (props: Props) => {
+
+    const logout = (): void => {
+        delete axios.defaults.headers.common['Authorization']
+        AsyncStorage.removeItem('userData')
+
+        props.navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [
+                { name: 'Auth' }
+              ],
+            })
+          );
+    }
+
     return (
         <DrawerContentScrollView>
             <View style={styles.header}>
@@ -16,7 +33,7 @@ const Menu: React.FC<Props> = (props: Props) => {
                     <Text style={styles.name}>Jonas</Text>
                     <Text style={styles.email}>jonas@.com</Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={logout}>
                     <View style={styles.logoutIcon}>
                         <Icon name="sign-out" size={30} color='#800'/>
                     </View>

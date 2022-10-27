@@ -1,19 +1,28 @@
 import React, { Component } from 'react'
 import {
-    View, Text, StyleSheet, ImageBackground, TouchableOpacity
+    View, Text, StyleSheet, ImageBackground, 
+    TouchableOpacity, FlatList, Alert
 } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import todayImage from '../../assets/imgs/today.jpg'
+import tomorrowImage from '../../assets/imgs/tomorrow.jpg'
+import weekImage from '../../assets/imgs/week.jpg'
+import monthmage from '../../assets/imgs/month.jpg'
 import AddTask from './AddTask'
 import State from '../interfaces/states/TaskList'
 import Props from '../interfaces/props/TaskList'
 import Task from '../components/Task'
-import { TaskRequest } from '../interfaces/response/Task'
+import { TaskRequest, TaskResponse } from '../interfaces/response/Task'
 import axios from 'axios'
 import { server, showError } from '../common'
+import moment from 'moment'
+import commonStyles from '../commonStyles'
 
 const initialState = {
-    showAddTask: false
+    showAddTask: false,
+    showDoneTasks: true,
+    visibleTasks: [],
+    tasks: []
 }
 
 class TaskList extends Component<Props, State> {
@@ -22,46 +31,125 @@ class TaskList extends Component<Props, State> {
         ...initialState
     }
 
+    componentDidMount = async() => {
+        this.loadTasks()
+    }
+
+    loadTasks = async (): Promise<void> => {
+        try {
+            const maxDate = moment()
+                .add({days: this.props.daysAhead})
+                .format('YYYY-MM-DD 23:59:59')
+            const resp = await axios.get(`${server}/tasks?date=${maxDate}`)
+            this.setState({tasks: resp.data}, this.filterTasks)
+        } catch (e) {
+            showError(e)
+        }
+    }
+
+    toggleTask = async (taskId: number): Promise<void> => {
+        try {
+            await axios.put(`${server}/tasks/${taskId}/toggle`)
+            this.loadTasks()
+        } catch(e) {
+            showError(e)
+        }
+    }
+
+    toggleFilter = (): void => {
+        this.setState({showDoneTasks: !this.state.showDoneTasks}, this.filterTasks)
+    }
+
+    filterTasks = ():void => {
+        let visibleTasks: Array<TaskResponse> = [];
+        if (this.state.showDoneTasks) {
+            visibleTasks = [...this.state.tasks]
+        } else {
+            const pending = task => task.doneAt == null
+            visibleTasks = this.state.tasks.filter(pending)
+        }
+
+        this.setState({ visibleTasks })
+
+    }
+
     addTask = async (newTask: TaskRequest): Promise<void> => {
+        if (!newTask.desc || !newTask.desc.trim()) {
+            Alert.alert('Dados Inválidos', 'Descrição não informada!')
+            return
+        }
+
         try {
             await axios.post(`${server}/tasks`, {
                 desc: newTask.desc,
                 estimateAt: newTask.estimateAt
             })
 
-            this.setState({showAddTask: false})
+            this.setState({showAddTask: false}, this.loadTasks)
         } catch(e) {
-            console.warn(e)
+            showError(e)
+        }
+    }
+
+    deleteTask = async (taskId: number): Promise<void> => {
+        try {
+            await axios.delete(`${server}/tasks/${taskId}`)
+            this.loadTasks()
+        } catch(e) {
+            showError(e)
+        }
+    }
+
+    getColor = (): any => {
+        switch (this.props.daysAhead) {
+            case 1: return commonStyles.colors.tomorrow
+            case 7: return commonStyles.colors.week
+            case 30: return commonStyles.colors.month
+            default: return commonStyles.colors.today
+        }
+    }
+
+    getImage = (): any => {
+        switch (this.props.daysAhead) {
+            case 1: return tomorrowImage
+            case 7: return weekImage
+            case 30: return monthmage
+            default: return todayImage
         }
     }
 
     render(): React.ReactElement {
+        const today = moment().locale('pt-br').format('ddd, D [de] MMMM')
 
         return (
             <>
                 <View style={styles.constainer}>
                     <AddTask isVisible={this.state.showAddTask}
                         closeModal={() => this.setState({showAddTask: false})}
-                        onSave={this.addTask}/>
-                    <ImageBackground source={todayImage}
+                        onSave={this.addTask}
+                        colorDay={this.getColor()}/>
+                    <ImageBackground source={this.getImage()}
                         style={styles.background}>
                         <View style={styles.iconBar}>
                             <TouchableOpacity onPress={() => this.props.navigation.openDrawer()}>
                                 <Icon name="bars" size={20} color={'#fff'}/>
                             </TouchableOpacity>
-                            <TouchableOpacity>
-                                <Icon name="eye" size={20} color={'#fff'}/>
+                            <TouchableOpacity onPress={this.toggleFilter}>
+                                <Icon name={this.state.showDoneTasks ? 'eye' : 'eye-slash'} size={20} color={'#fff'}/>
                             </TouchableOpacity>
                         </View>   
                         <View style={styles.titleBar}>
-                            <Text style={styles.title}>Hoje</Text>
-                            <Text style={styles.subtitle}>ter, 18 de outubro</Text>
+                            <Text style={styles.title}>{this.props.title}</Text>
+                            <Text style={styles.subtitle}>{today}</Text>
                         </View>
                     </ImageBackground>
                     <View style={styles.taskList}>
-                        <Task/>
+                        <FlatList data={this.state.visibleTasks} 
+                            keyExtractor={task => `${task.id}`}
+                            renderItem={({item}) => <Task {...item} onDelete={this.deleteTask} onToggleTask={this.toggleTask}/>}/>
+                        
                     </View>
-                    <TouchableOpacity style={styles.addButton}
+                    <TouchableOpacity style={[styles.addButton, {backgroundColor: this.getColor()}]}
                         onPress={() => this.setState({showAddTask: true})}>
                         <Icon name="plus" size={20} color={'#fff'}/>
                     </TouchableOpacity>

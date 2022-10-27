@@ -58,17 +58,17 @@ class AddTask extends Component<Props, State> {
                     <View style={styles.overlay}></View>
                 </TouchableWithoutFeedback>
                 <View style={styles.container}>
-                    <Text style={styles.header}>Nova Tarefa</Text>
+                    <Text style={[styles.header, {backgroundColor: this.props.colorDay}]}>Nova Tarefa</Text>
                     <TextInput style={styles.input}
                         placeholder="Informe a descrição"
                         onChangeText={value => this.setState({ desc: value })} />
                     {this.getDatePicker()}
                     <View style={styles.buttons}>
                         <TouchableOpacity>
-                            <Text style={styles.button} onPress={this.props.closeModal}>Cancelar</Text>
+                            <Text style={[styles.button, {color: this.props.colorDay}]} onPress={this.props.closeModal}>Cancelar</Text>
                         </TouchableOpacity>
                         <TouchableOpacity onPress={this.save}>
-                            <Text style={styles.button}>Salvar</Text>
+                            <Text style={[styles.button, {color: this.props.colorDay}]}>Salvar</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

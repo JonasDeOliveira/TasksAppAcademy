@@ -4,4 +4,5 @@ export default interface Props {
     isVisible: boolean;
     closeModal: () => void;
     onSave: (task: TaskRequest) => void;
+    colorDay: string;
 }

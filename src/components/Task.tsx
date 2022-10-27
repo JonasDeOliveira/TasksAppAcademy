@@ -9,46 +9,63 @@ import {
 import Swipeable from 'react-native-gesture-handler/Swipeable'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import moment from 'moment'
+import Props from '../interfaces/props/Task'
 import 'moment/locale/pt-br'
 
-const Task: React.FC = () => {
+const Task: React.FC<Props> = (props: Props) => {
 
-    const getRightContent: React.FC = ():React.ReactElement => {
+    const date: string = props.doneAt ? props.doneAt : props.estimateAt
+    const formattesDate: string = moment(date).locale('pt-br').format('ddd, D [de] MMMM')
+
+    const getRightContent: React.FC = (): React.ReactElement => {
 
         return (
-            <TouchableOpacity style={styles.right}>
-                 <Icon name="trash" size={30} color='#fff' />
+            <TouchableOpacity style={styles.right}
+                onPress={() => props.onDelete && props.onDelete(props.id)}>
+                <Icon name="trash" size={30} color='#fff' />
             </TouchableOpacity>
         )
     }
 
-    const getLeftContent: React.FC = ():React.ReactElement => {
+    const getLeftContent: React.FC = (): React.ReactElement => {
 
         return (
             <TouchableOpacity style={styles.left}>
-                 <Icon style={styles.excludeIcon} name="trash" size={20} color='#fff' />
-                 <Text style={styles.excludeText}>Excluir</Text>
+                <Icon style={styles.excludeIcon} name="trash" size={20} color='#fff' />
+                <Text style={styles.excludeText}>Excluir</Text>
             </TouchableOpacity>
+        )
+    }
+
+    const getCheckTask = (doneAt: string): React.ReactElement => {
+
+        if (doneAt) {
+            return (
+                <View style={styles.done}>
+                    <Icon name="check" size={20} color='#fff' />
+                </View>
+            )
+        }
+        return (
+            <View style={styles.pending}></View>
         )
     }
 
 
     return (
-        <Swipeable 
+        <Swipeable
             renderRightActions={getRightContent}
-            renderLeftActions={getLeftContent}> 
+            renderLeftActions={getLeftContent}
+            onSwipeableLeftOpen={() => props.onDelete && props.onDelete(props.id)}>
             <View style={styles.container}>
-                <TouchableWithoutFeedback>
+                <TouchableWithoutFeedback onPress={() => props.onToggleTask(props.id)}>
                     <View style={styles.checkContainer}>
-                        <View style={styles.pending}></View>
-                        <View style={styles.done}>
-                            <Icon name="check" size={20} color='#fff'/>
-                        </View>
+                        {getCheckTask(props.doneAt)}
                     </View>
                 </TouchableWithoutFeedback>
                 <View>
-                    <Text style={styles.desc}>Tarefa</Text>
-                    <Text style={styles.date}>ter, 18 de outubro</Text>
+                    <Text style={styles.desc}>{props.desc}</Text>
+                    <Text style={styles.date}>{formattesDate}</Text>
                 </View>
             </View>
 
